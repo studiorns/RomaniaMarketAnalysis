@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Romania Market Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* SONER Logo Animation */
+        @keyframes sonerScan { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes sonerBlip { 0%, 20%, 100% { opacity: 0; } 2%, 15% { opacity: 1; } 3% { transform: scale(1.2); } }
+        
+        /* SONER Logo styles */
+        .soner-logo { display: flex; align-items: center; color: white; font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 300; }
+        .soner-radar { width: 24px; height: 24px; border-radius: 50%; border: 1px solid white; margin: 0 3px; position: relative; background-color: rgba(255, 255, 255, 0.05); overflow: hidden; }
+        .soner-scanner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; animation: sonerScan 4s linear infinite; transform-origin: center; }
+        .soner-scanner::before { content: ''; position: absolute; top: 0; left: 50%; width: 50%; height: 50%; background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.4)); transform-origin: bottom left; clip-path: polygon(0 0, 100% 0, 0 100%); }
+        .soner-scanner::after { content: ''; position: absolute; top: 0; left: 50%; width: 50%; height: 1px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 1)); transform-origin: left center; box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+        .soner-blip { position: absolute; width: 2px; height: 2px; background-color: white; border-radius: 50%; opacity: 0; box-shadow: 0 0 4px white; }
+        .soner-blip:nth-child(1) { top: 25%; left: 30%; animation: sonerBlip 4s 1s infinite; }
+        .soner-blip:nth-child(2) { top: 65%; left: 60%; animation: sonerBlip 4s 2.5s infinite; }
+        .soner-tagline { color: white; font-size: 8px; text-transform: uppercase; font-weight: 500; letter-spacing: 0.5em; margin-left: 10px; opacity: 0.8; }
+
+        :root {
+            --primary: #4285f4;
+            --primary-light: #1a2233;
+            --primary-dark: #8ab4f8;
+            --secondary: #34a853;
+            --secondary-light: #1a2a1e;
+            --warning: #fbbc04;
+            --warning-light: #332a1a;
+            --danger: #ea4335;
+            --danger-light: #331f1e;
+            --gray-100: #1e1e1e;
+            --gray-200: #2d2d2d;
+            --gray-300: #3d3d3d;
+            --gray-400: #4d4d4d;
+            --gray-500: #777777;
+            --gray-600: #a0a0a0;
+            --gray-700: #c0c0c0;
+            --gray-800: #e0e0e0;
+            --gray-900: #f0f0f0;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 15px 25px rgba(0, 0, 0, 0.6);
+            --radius-sm: 4px;
+            --radius: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.3s ease;
+            --bg-color: #000000;
+            --card-bg: #121212;
+            --section-bg: #181818;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--gray-800);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1a73e8 0%, #174ea6 100%);
+            color: white;
+            padding: 32px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQ0MCIgaGVpZ2h0PSI0MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IHgxPSIxMDAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiIGlkPSJhIj48c3RvcCBzdG9wLWNvbG9yPSIjRkZGIiBzdG9wLW9wYWNpdHk9Ii4wNSIgb2Zmc2V0PSIwJSIvPjxzdG9wIHN0b3AtY29sb3I9IiNGRkYiIHN0b3Atb3BhY2l0eT0iLjAyIiBvZmZzZXQ9IjEwMCUiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cGF0aCBkPSJNMTQ0MCAyMDBjLTEzMS44LTEyLjktMjY3LjgtMTkuNC00MDgtMTkuNC0xNDAuMiAwLTI3Ni4yIDYuNS00MDggMTkuNFYwaDgxNnYyMDB6IiBmaWxsPSJ1cmwoI2EpIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.1;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 0;
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--gray-900);
+        }
+        
+        h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        h3 {
+            font-size: 1.35rem;
+            margin-bottom: 1rem;
+        }
+        
+        h4 {
+            font-size: 1.15rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        .dashboard-section {
+            background-color: var(--section-bg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow);
+            padding: 28px;
+            margin-bottom: 32px;
+            transition: var(--transition);
+            border: 1px solid var(--gray-300);
+        }
+        
+        .dashboard-section:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .dashboard-section h2 {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid var(--gray-200);
+            padding-bottom: 16px;
+            margin-bottom: 28px;
+            color: var(--gray-900);
+            font-size: 1.5rem;
+        }
+        
+        .dashboard-section h2 i {
+            margin-right: 12px;
+            color: var(--primary);
+            font-size: 1.25rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+        }
+        
+        .metric-card {
+            background-color: var(--gray-100);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary);
+            opacity: 0;
+            transition: var(--transition);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+        
+        .metric-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .metric-name i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+        
+        .change {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .change i {
+            margin-right: 4px;
+            font-size: 0.75rem;
+        }
+        
+        .positive { 
+            background-color: var(--secondary-light); 
+            color: var(--secondary);
+        }
+        
+        .negative { 
+            background-color: var(--danger-light); 
+            color: var(--danger);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 28px;
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            border: 1px solid var(--gray-300);
+            transition: var(--transition);
+        }
+        
+        .chart-container:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .scenario-selector {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 24px 0;
+            gap: 12px;
+        }
+        
+        .scenario-btn {
+            background-color: var(--gray-100);
+            border: 1px solid var(--gray-300);
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            color: var(--gray-700);
+        }
+        
+        .scenario-btn:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+        
+        .scenario-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+        
+        .tab-container {
+            margin-top: 24px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid var(--gray-300);
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray-600);
+            border-radius: var(--radius) var(--radius) 0 0;
+            transition: var(--transition);
+            position: relative;
+            font-size: 0.95rem;
+        }
+        
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary);
+            transform: scaleX(0);
+            transition: var(--transition);
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary);
+        }
+        
+        .tab-btn.active::after {
+            transform: scaleX(1);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 8px 0 24px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .insight-summary {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary);
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            position: relative;
+        }
+        
+        .insight-summary::before {
+            content: '\f0eb';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            font-size: 1.5rem;
+            color: var(--primary);
+            opacity: 0.2;
+        }
+        
+        .insight-summary h3 {
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .insight-summary h3 i {
+            margin-right: 10px;
+        }
+        
+        .insight-summary p {
+            margin: 0;
+            color: var(--gray-800);
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+        
+        .highlight-box {
+            background-color: var(--warning-light);
+            border-left: 4px solid var(--warning);
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            position: relative;
+        }
+        
+        .highlight-box::before {
+            content: '\f071';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            font-size: 1.5rem;
+            color: var(--warning);
+            opacity: 0.2;
+        }
+        
+        .highlight-box h5 {
+            color: #d68000;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .highlight-box h5 i {
+            margin-right: 10px;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 28px;
+            margin: 28px 0;
+        }
+        
+        .supporting-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+        
+        .data-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-300);
+            transition: var(--transition);
+        }
+        
+        .data-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-3px);
+        }
+        
+        .data-card h4 {
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+        }
+        
+        .data-card h4 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+        
+        .data-card ul {
+            padding-left: 18px;
+            margin-bottom: 0;
+        }
+        
+        .data-card li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .data-card li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .recommendation-card {
+            background-color: var(--gray-100);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .recommendation-card::after {
+            content: '\f0eb';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+            color: var(--primary);
+            opacity: 0.05;
+        }
+        
+        .recommendation-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .recommendation-card h4 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .recommendation-card h4 i {
+            margin-right: 10px;
+        }
+        
+        .recommendation-card p {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        .recommendation-card p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            z-index: 1000;
+        }
+        
+        .print-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 6px 16px rgba(26, 115, 232, 0.5);
+        }
+        
+        
+        @media (max-width: 768px) {
+            .metrics-grid, .data-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .supporting-metrics-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .tab-buttons {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                width: 100%;
+                text-align: left;
+                padding: 12px;
+                border-radius: 0;
+            }
+            
+            .print-btn {
+                bottom: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                right: 20px;
+            }
+            
+            .data-card {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            
+            .data-card ul {
+                padding-left: 16px;
+            }
+            
+            .data-card li {
+                font-size: 0.95rem;
+                line-height: 1.4;
+                margin-bottom: 8px;
+            }
+            
+            .container {
+                padding: 0 16px;
+            }
+            
+            .dashboard-section {
+                padding: 20px;
+                margin-bottom: 24px;
+            }
+            
+            .chart-container {
+                height: 350px;
+                padding: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .data-card h4 {
+                font-size: 1rem;
+            }
+            
+            .data-card li {
+                font-size: 0.9rem;
+            }
+            
+            .dashboard-section h2 {
+                font-size: 1.3rem;
+            }
+            
+            .metric-value {
+                font-size: 1.6rem;
+            }
+            
+            .chart-container {
+                height: 300px;
+                padding: 12px;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+            }
+            
+            .dashboard-section {
+                box-shadow: none;
+                break-inside: avoid;
+            }
+            
+            .print-btn {
+                display: none;
+            }
+            
+            .tab-content {
+                display: block !important;
+            }
+            
+            .tab-buttons {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
+                <div class="soner-logo">
+                    S<div class="soner-radar">
+                        <div class="soner-scanner"></div>
+                        <div class="soner-blip"></div>
+                        <div class="soner-blip"></div>
+                    </div>NER
+                    <span class="soner-tagline">Visual Intelligence</span>
+                </div>
+            </div>
+            <h1>Romania Market Dashboard</h1>
+            <h2 style="font-size: 1.3rem; margin-top: 5px; font-weight: 500;">Department of Culture and Tourism - Abu Dhabi</h2>
+            <p>Strategic Market Analysis & Forecast 2025</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="dashboard-section">
+            <h2><i class="fas fa-chart-line"></i> Brand Health Metrics (Q4 2024 vs Q4 2023)</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-eye"></i> Awareness</div>
+                    <div class="metric-value">67.12% <span class="change positive"><i class="fas fa-arrow-up"></i> +3.12pp vs Q4'23</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-search"></i> Consideration</div>
+                    <div class="metric-value">19.45% <span class="change positive"><i class="fas fa-arrow-up"></i> +3.45pp vs Q4'23</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-bullseye"></i> Intent</div>
+                    <div class="metric-value">6.64% <span class="change negative"><i class="fas fa-arrow-down"></i> -0.36pp vs Q4'23</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-calculator"></i> Intent/Consideration Ratio</div>
+                    <div class="metric-value">0.34 <span class="change negative"><i class="fas fa-arrow-down"></i> -0.10 vs Q4'23</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2><i class="fas fa-chart-pie"></i> Key Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-search"></i> Avg. Monthly Indexed Travel Queries (2024)</div>
+                    <div class="metric-value">3.68 <span class="change positive"><i class="fas fa-arrow-up"></i> +25.17% YoY</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-ad"></i> Media Impressions (2025 Plan)</div>
+                    <div class="metric-value">471.3M <span class="change positive"><i class="fas fa-arrow-up"></i> +31.42% YoY</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-plane"></i> Flight Searches (2024)</div>
+                    <div class="metric-value">10.9K <span class="change positive"><i class="fas fa-arrow-up"></i> +33.97% YoY</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-hotel"></i> Hotel Guests (2024)</div>
+                    <div class="metric-value">39.2K <span class="change positive"><i class="fas fa-arrow-up"></i> +184.33% YoY</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2><i class="fas fa-globe-europe"></i> Market Characteristics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-calendar-day"></i> Average Length of Stay</div>
+                    <div class="metric-value">3.1 days</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-hourglass-half"></i> Booking Window</div>
+                    <div class="metric-value">67 days</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-chart-bar"></i> 2025 Growth Forecast</div>
+                    <div class="metric-value">28.5%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name"><i class="fas fa-calendar-check"></i> Peak Months (Hotel Guests)</div>
+                    <div class="metric-value">Aug & Sep</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2><i class="fas fa-search"></i> Travel Queries</h2>
+            <div class="scenario-selector">
+                <button class="scenario-btn active" data-scenario="moderate">Moderate</button>
+                <button class="scenario-btn" data-scenario="conservative">Conservative</button>
+                <button class="scenario-btn" data-scenario="ambitious">Ambitious</button>
+                <button class="scenario-btn" data-scenario="actual">2023-2024 Actual</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="queries-chart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2><i class="fas fa-ad"></i> Media Impressions</h2>
+            <div class="chart-container">
+                <canvas id="impressions-chart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2><i class="fas fa-chart-area"></i> Supporting Metrics</h2>
+            <div class="supporting-metrics-grid">
+                <div>
+                    <h3><i class="fas fa-plane"></i> Flight Searches</h3>
+                    <div class="chart-container">
+                        <canvas id="flights-chart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3><i class="fas fa-hotel"></i> Hotel Guests</h3>
+                    <div class="chart-container">
+                        <canvas id="hotel-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2><i class="fas fa-lightbulb"></i> Market Insights</h2>
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="seasonality">Seasonality</button>
+                    <button class="tab-btn" data-tab="trends">Trends & Patterns</button>
+                    <button class="tab-btn" data-tab="recommendations">Recommendations</button>
+                    <button class="tab-btn" data-tab="advanced-insights">Advanced Insights</button>
+                </div>
+                
+                <div class="tab-content active" id="seasonality-tab">
+                    <div class="insight-summary">
+                        <h3><i class="fas fa-calendar-alt"></i> Key Takeaway</h3>
+                        <p>The Romania market shows a distinct autumn seasonality with peaks in October-November. Q4 represents the highest travel query period, accounting for over 40% of annual queries.</p>
+                    </div>
+                    
+                    <h3>Seasonal Pattern</h3>
+                    <p>The Romania market demonstrates a distinct seasonal pattern with hotel guests peaking in August (4,724) and September (4,685), with October (4,209) as a close third. For travel queries, the highest peak occurs in October (4.56), followed by November (4.57). The lowest performance for both metrics occurs during the summer months (May-July).</p>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4><i class="fas fa-chart-pie"></i> Seasonal Distribution</h4>
+                            <ul>
+                                <li><strong>Winter (Dec-Feb)</strong>: 28% of annual travel queries</li>
+                                <li><strong>Spring (Mar-May)</strong>: 18% of annual travel queries</li>
+                                <li><strong>Summer (Jun-Aug)</strong>: 14% of annual travel queries</li>
+                                <li><strong>Fall (Sep-Nov)</strong>: 40% of annual travel queries</li>
+                            </ul>
+                        </div>
+                        <div class="data-card">
+                            <h4><i class="fas fa-trophy"></i> Peak Performance</h4>
+                            <ul>
+                                <li><strong>Top Month (Travel Queries)</strong>: November (4.57) in 2024; November (8.41) projected for 2025</li>
+                                <li><strong>Top Month (Hotel Guests)</strong>: August (4,724)</li>
+                                <li><strong>Top Month (Flight Searches)</strong>: October (1,120)</li>
+                                <li><strong>Secondary Peak</strong>: January-February</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3>Implications for Marketing</h3>
+                    <p>The distinct autumn seasonality of the Romania market suggests that marketing efforts should be concentrated in Q2 and early Q3 to capture the peak booking window for fall travel. The 67-day average booking window indicates that campaigns should be launched approximately 2 months before the target travel period.</p>
+                    
+                    <div class="highlight-box">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Strategic Opportunity</h5>
+                        <p>The summer months (June-August) represent an opportunity for growth, as they currently account for only 14% of annual travel queries. Targeted summer campaigns highlighting Abu Dhabi's indoor attractions and luxury hotel experiences could help balance the seasonal distribution.</p>
+                    </div>
+                    
+                    <div class="highlight-box" style="background-color: var(--primary-light); border-left: 4px solid var(--primary);">
+                        <h5 style="color: var(--primary-dark);"><i class="fas fa-chart-line"></i> 2025 Forecast Insight</h5>
+                        <p>The 2025 forecast shows a significant shift in peak travel query months to October-November across all scenarios, with November projected to reach 8.41 in the moderate scenario (an 84% increase from November 2024). This dramatic shift suggests a substantial evolution in the Romania market's seasonal pattern, with the peak period extending further into Q4 and showing much stronger performance.</p>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="trends-tab">
+                    <div class="insight-summary">
+                        <h3><i class="fas fa-chart-line"></i> Key Takeaway</h3>
+                        <p>The Romania market shows a concerning downward trend in intent (-0.36pp) despite increases in awareness (+3.12pp) and consideration (+3.45pp). This suggests challenges in converting interest into actual travel intent.</p>
+                    </div>
+                    
+                    <h3>Market Performance</h3>
+                    <p>The Romania market has shown mixed performance in 2024. While awareness remains strong at 67.12% (+3.12pp vs Q4'23) and consideration has improved to 19.45% (+3.45pp), intent has declined to 6.64% (-0.36pp). This pattern suggests that while Abu Dhabi is becoming better known among Romanian travelers, there are barriers preventing consideration from converting to intent.</p>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4><i class="fas fa-arrow-up"></i> Positive Trends</h4>
+                            <ul>
+                                <li><strong>Awareness</strong>: Increased by 3.12pp to 67.12%</li>
+                                <li><strong>Consideration</strong>: Increased by 3.45pp to 19.45%</li>
+                                <li><strong>Hotel Guests</strong>: 184.33% YoY growth in 2024</li>
+                                <li><strong>Flight Searches</strong>: 33.97% YoY growth in 2024</li>
+                                <li><strong>Travel Queries</strong>: 25.17% YoY growth in 2024</li>
+                            </ul>
+                        </div>
+                        <div class="data-card">
+                            <h4><i class="fas fa-arrow-down"></i> Negative Trends</h4>
+                            <ul>
+                                <li><strong>Intent</strong>: Decreased by 0.36pp to 6.64%</li>
+                                <li><strong>Intent/Consideration Ratio</strong>: Decreased by 0.10 to 0.34</li>
+                                <li><strong>Summer Performance</strong>: Continued weakness in Jun-Aug</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3>Market Challenges</h3>
+                    <p>The decline in intent metrics despite improved awareness and consideration suggests a need for renewed marketing approaches. With a strong growth forecast of 28.5% YoY in the moderate scenario, Romania requires targeted strategies that address the specific barriers identified in the survey data while building on the market's growing awareness foundation.</p>
+                    
+                    <div class="highlight-box">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Market Challenge</h5>
+                        <p>The Romania market shows a concerning Intent/Consideration ratio of 0.34, which is among the lowest in all markets. This indicates that while Romanians are increasingly considering Abu Dhabi as a destination, they are not converting to actual travel intent at the expected rate. Addressing the key barriers of restrictive laws/customs perception (52%), unfriendly people perception (36%), and safety concerns (31%) could significantly improve this conversion rate.</p>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="advanced-insights-tab">
+                    <div class="insight-summary">
+                        <h3><i class="fas fa-chart-pie"></i> Advanced Analysis</h3>
+                        <p>Analysis shows a 2-month lagged effect between media impressions and travel queries with an R² of 0.53, suggesting strategic media planning should account for this lead time for maximum impact.</p>
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h4><i class="fas fa-calculator"></i> Statistical Insights</h4>
+                            <ul>
+                                <li><strong>Media Elasticity</strong>: 0.38 (moderate impact)</li>
+                                <li><strong>Seasonality Index</strong>: 2.1 (moderate-high seasonal variation)</li>
+                                <li><strong>YoY Growth Consistency</strong>: 0.76 (moderate consistency)</li>
+                                <li><strong>Forecast Confidence Interval</strong>: ±7.3%</li>
+                            </ul>
+                        </div>
+                        <div class="data-card">
+                            <h4><i class="fas fa-chart-line"></i> Correlation Analysis</h4>
+                            <ul>
+                                <li><strong>Queries-to-Bookings Ratio</strong>: 1:42 (improving YoY)</li>
+                                <li><strong>Flight Search Conversion</strong>: 5.8% (down from 6.3% in 2023)</li>
+                                <li><strong>Impression Efficiency</strong>: 0.61 queries per 1000 impressions</li>
+                                <li><strong>Query-to-Guest Lag</strong>: 67-day average (matches booking window)</li>
+                            </ul>
+                        </div>
+                        <div class="data-card">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Top Barriers to Visit (Q4 2024 vs Q4 2023)</h4>
+                            <ul>
+                                <li><strong>Restrictive Laws/Customs</strong>: 52% (-2pp) find laws/customs too restrictive</li>
+                                <li><strong>Unfriendly People</strong>: 36% (+4pp) heard people are not friendly/helpful</li>
+                                <li><strong>Safety Concerns</strong>: 31% (-1pp) perceive it as unsafe</li>
+                                <li><strong>Destination Preference</strong>: 31% (-2pp) prefer other destinations</li>
+                                <li><strong>Expense Concerns</strong>: 24% (-1pp) think it's too expensive</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="data-card" style="margin-top: 28px;">
+                        <h4><i class="fas fa-arrow-down"></i> Decreasing Barriers</h4>
+                        <ul>
+                            <li><strong>Not Much to Do</strong>: 2% find there's not much to do (-8pp)</li>
+                            <li><strong>Not Authentic Enough</strong>: 13% think it's too fake/not authentic enough (-5pp)</li>
+                            <li><strong>Bad Experiences</strong>: 11% heard others had bad experiences (-4pp)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <h5><i class="fas fa-bullseye"></i> Advanced Recommendation</h5>
+                        <p>Implement a dynamic media allocation model that adjusts spend based on the 2-month lag effect, with heavier investment in August-September to impact the October-November peak and December-January to impact the secondary peak in February-March.</p>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="recommendations-tab">
+                    <div class="insight-summary">
+                        <h3><i class="fas fa-lightbulb"></i> Key Takeaway</h3>
+                        <p>Strategic recommendations for the Romania market focus on addressing perceptions of restrictive laws/customs, improving the perception of local hospitality, enhancing safety perception, addressing the lack of direct flights, and developing targeted campaigns for the peak autumn season.</p>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <h4><i class="fas fa-gavel"></i> Address Restrictive Laws/Customs Perception</h4>
+                        <p>Implement a "Modern Abu Dhabi" campaign to counter the high perception of restrictive laws/customs (52%).</p>
+                        <ul>
+                            <li>Create content highlighting the cosmopolitan lifestyle and modern aspects of Abu Dhabi</li>
+                            <li>Develop a Romanian-language guide to Abu Dhabi customs and etiquette</li>
+                            <li>Partner with Romanian influencers to showcase the ease of visiting</li>
+                            <li>Feature testimonials from Romanian visitors about their experiences</li>
+                        </ul>
+                        <p><strong>Projected outcome:</strong> Reduce "restrictive laws/customs" perception by 8-10pp</p>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <h4><i class="fas fa-handshake"></i> Hospitality Perception Enhancement</h4>
+                        <p>Launch a "Warm Welcome" campaign to address the increasing perception that people are not friendly/helpful (36%, +4pp).</p>
+                        <ul>
+                            <li>Create content featuring local hospitality workers and their stories</li>
+                            <li>Develop a series of videos showcasing positive interactions between locals and Romanian tourists</li>
+                            <li>Partner with Romanian travel agencies to provide cultural briefings</li>
+                            <li>Implement a Romanian language welcome program at key tourist sites</li>
+                        </ul>
+                        <p><strong>Projected outcome:</strong> Reduce "unfriendly people" perception by 6-8pp</p>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <h4><i class="fas fa-plane"></i> Direct Flight Initiative</h4>
+                        <p>Address the growing concern about lack of direct flights (18%, +7pp) through strategic airline partnerships.</p>
+                        <ul>
+                            <li>Engage with airlines to explore direct flight options from Bucharest to Abu Dhabi</li>
+                            <li>Develop special packages with connecting flights through major European hubs</li>
+                            <li>Create content highlighting the ease of reaching Abu Dhabi with one-stop connections</li>
+                            <li>Partner with travel agencies to offer streamlined booking processes</li>
+                        </ul>
+                        <p><strong>Projected outcome:</strong> Mitigate the "no direct flights" barrier through improved connectivity options</p>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <h4><i class="fas fa-calendar-alt"></i> Seasonal Campaign Strategy</h4>
+                        <p>Develop a "Perfect Autumn in Abu Dhabi" campaign to capitalize on the strong Q4 seasonality.</p>
+                        <ul>
+                            <li>Create content highlighting Abu Dhabi's ideal climate during October-November</li>
+                            <li>Develop special autumn packages with Romanian travel partners</li>
+                            <li>Implement targeted media campaigns in August-September (accounting for the 2-month lag)</li>
+                            <li>Feature autumn events and activities that appeal to Romanian travelers</li>
+                        </ul>
+                        <p><strong>Projected outcome:</strong> Increase Q4 travel queries by 30-35% YoY</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="romania_dashboard.js"></script>
+    
+    <button class="print-btn" title="Print Dashboard"><i class="fas fa-print"></i></button>
+    
+    <footer style="background-color: var(--gray-100); padding: 20px 0; text-align: center; margin-top: 40px; border-top: 1px solid var(--gray-300);">
+        <div class="container">
+            <p style="margin: 0; color: var(--gray-700); font-size: 0.9rem;">© 2025 Research & Insights Unit | Strategic Marketing & Communications | Department of Culture and Tourism – Abu Dhabi</p>
+        </div>
+    </footer>
+</body>
+</html>
